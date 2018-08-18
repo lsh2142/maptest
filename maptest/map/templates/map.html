@@ -1,0 +1,150 @@
+<!DOCTYPE HTML>
+<HTML>
+<HEAD>
+	<TITLE>Simple Map</TITLE>
+	<META NAME="viewport" content="initial-scale=1.0">
+	<META CHARSET="utf-8">
+
+	<style>
+		#map {
+			height:100%;
+			}
+		html, body {
+			height: 100%;
+			margin: 0;
+			padding: 0;
+		}
+		#nav_float {
+			width:400px;
+			height:200px;
+			background:#FFFFFF;
+			position:absolute;
+			top:65px;
+			left:25px;
+			padding:10px;
+			border:2px solid black;
+			border-radius: 5px;
+			box-shadow: 1px 1px 5px #000000;
+		}
+		#t_layout {
+			width:100%;
+			text-align: center;
+			padding:0px;
+			margin:0px;
+		}
+	</style>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	
+</HEAD>
+<BODY>
+	<DIV ID="map"></div>
+	<DIV ID="nav_float">
+		<form action="" method="post" enctype="multipart/form-data" novalidate>
+    		{% csrf_token %}
+    		<p>API name<input type="text" name="api_type"/></p>
+    		<p>vertex json string<input type="text" name="vertex_json"/></p>
+    		<button type="submit">Upload</button>
+  		</form>
+  		<p id="debug">{{markers}}, {{debug}}</p>
+	</DIV>	
+	
+	<script>
+		var map;
+		var markers = [];
+
+		$(function() {
+			$.ajaxSetup({
+	       		error: function(jqXHR, exception) {
+		            if (jqXHR.status === 0) {
+		                alert('Not connect.\n Verify Network.');
+		            } else if (jqXHR.status == 404) {
+		                alert('Requested page not found. [404]');
+		            } else if (jqXHR.status == 500) {
+		                alert('Internal Server Error [500].');
+		            } else if (exception === 'parsererror') {
+		                alert('Requested JSON parse failed.');
+		            } else if (exception === 'timeout') {
+		                alert('Time out error.');
+		            } else if (exception === 'abort') {
+		                alert('Ajax request aborted.');
+		            } else {
+		                alert('Uncaught Error.\n' + jqXHR.responseText);
+		            }
+        		},
+        		data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+
+    		});
+		});
+
+		function initMap() {
+			map = new google.maps.Map(document.getElementById('map'), {
+				center: {lat: 37.555386, lng: 126.983925},
+				zoom: 13
+				});
+
+			$.ajax({
+				url:'/getMarkerData',
+				success:function(data) {
+					var results = data['results']
+					apiPathCoords = []
+
+					var length = results.length;
+					var startLatLng = new google.maps.LatLng(results[0].y, results[0].x)
+
+					var startMarker = new google.maps.Marker({
+						position: startLatLng,
+						map: map,
+						title: 'Start',
+						snippet: 'Start',
+						draggable: true
+					});
+
+					startMarker.setMap(map)
+
+					var destLatLng = new google.maps.LatLng(results[length-1].y, results[length-1].x)
+					
+					var destMarker = new google.maps.Marker({
+						position: destLatLng,
+						map: map,
+						title: 'Dest',
+						snippet: 'Dest',
+						draggable: true
+
+					});			
+					destMarker.setMap(map)		
+
+					for(var i=0; i<results.length; i++) {
+						apiPathCoords.push({lat:results[i].y, lng: results[i].x})
+					}
+
+					var strokeColor = '#FF0000'
+					if(results[0].marker_type == 'tmap')
+						strokeColor = '#FF0000'
+					else
+						strokeColor = '#00FF00'
+
+					var apiPath = new google.maps.Polyline({
+					        path: apiPathCoords,
+					        geodesic: true,
+					        strokeColor: '#FF0000',
+					        strokeOpacity: 1.0,
+					        strokeWeight: 2
+					    });
+					apiPath.setMap(map)
+				},
+				type:'POST'
+			});
+
+		}
+
+		function setMapOnAll(map) {
+			for(var i=0;i<markers.length;i++) {
+				markers[i].setMap(map);
+			}
+		}
+
+	</script>
+	<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBkT3J9wT7NhzmproGdBQL0CWHCY1QneI0&callback=initMap" type="text/javascript"></script>
+	
+</body>
+</html>

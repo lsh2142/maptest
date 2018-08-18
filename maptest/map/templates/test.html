@@ -1,0 +1,92 @@
+<!DOCTYPE HTML>
+<HTML>
+<HEAD>
+	<TITLE>Simple Map</TITLE>
+	<META NAME="viewport" content="initial-scale=1.0">
+	<META CHARSET="utf-8">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	
+	
+	<script type="text/javascript">
+
+  var map;
+
+  $(function() {
+  	$('#debug').html("BlahBlah")
+  })
+
+  function initialize() {
+
+    var mapDiv = document.getElementById('map-canvas');
+    map = new google.maps.Map(mapDiv, {
+      center: new google.maps.LatLng(48.208174,16.373819),
+      zoom: 12,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    });
+
+    google.maps.event.addListenerOnce(map, 'tilesloaded', 'addMarkers');
+
+  }
+  function addMarkers() {
+
+      {% for mark in markers %}
+        var point = new google.maps.LatLng({{mark.y}},{{mark.x}});            
+        var marker = new google.maps.Marker({
+        	position: point,
+        	map: map,            
+        });
+             
+        google.maps.event.addListener(marker, 'click', function() {
+            //window.location.href = this.url;
+             // this['infowindow'].open(map, this);
+        });
+        google.maps.event.addListener(marker, 'mouseover', function() {
+            // this['infowindow'].open(map, this);
+                });
+        google.maps.event.addListener(marker, 'mouseout', function() {
+            // this['infowindow'].close(map, this);
+
+            });
+
+
+
+
+
+        {% endfor %}    
+
+  }
+
+
+  // google.maps.event.addDomListener(window, 'load', initialize);
+
+  $(window).load(function(){
+  	$('#debug').html("BlahBlah")
+  	initialize()
+  })
+
+  $('body').load(function(){
+  	$('#debug').html("Bodybody")
+  	initialize()
+  })
+</script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?&key=AIzaSyBkT3J9wT7NhzmproGdBQL0CWHCY1QneI0" type="text/javascript"></script>	
+
+	
+</HEAD>
+<BODY>
+	<DIV ID="map-canvas"></div>
+	<DIV ID="nav_float">
+		<form action="" method="post" enctype="multipart/form-data" novalidate>
+    		{% csrf_token %}
+    		<p>API name<input type="text" name="api_type"/></p>
+    		<p>vertex json string<input type="text" name="vertex_json"/></p>
+    		<button type="submit">Upload</button>
+  		</form>
+  		<p id="debug">{{markers}}, {{debug}}</p>
+	</DIV>
+	
+	
+	
+</body>
+</html>
